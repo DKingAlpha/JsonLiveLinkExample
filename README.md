@@ -37,9 +37,9 @@ Json Data Format Sent to JsonLiveLink:
 
 ## Usage
 
-1. In main.py, edit `bones, subject name, xlim, ylim`
-2. Run main.py. When you drag the points, there should be a green light on Live Link Panel.
-3. To preview: open SKMesh, in preview scene settings, set Preview Controller to LiveLink Preview Controller, set Subject Name to the one you just set in main.py.
+1. In main_*.py, edit `subject_name, skeleton, xlim, ylim`
+2. Run main_*.py. When you drag the points, there should be a green light on Live Link Panel.
+3. To preview: open SKMesh, in preview scene settings, set Preview Controller to LiveLink Preview Controller, set Subject Name to the one you just set in main_*.py.
 4. To use it in your game: Create an AnimBP for your skeletal mesh, add LiveLinkPose node, select subject name in detail panel. Save AnimBP. Drag the SKMesh to scene, set AnimBP to the one you just created.
 
 ## Bones definition

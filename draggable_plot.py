@@ -14,7 +14,7 @@ class DraggablePlot:
         Args:
             xlim: tuple[float,float]
             ylim: tuple[float,float]
-            update_callback(points): callable, where points are { point_name: (x,y), ... }
+            update_callback(points): callable, where points are dict of point_name->(x,y)
         """
 
         self._figure, self._axes, self._line = None, None, None

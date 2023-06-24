@@ -3,8 +3,6 @@
 
 from __future__ import annotations
 import socket
-import random
-from draggable_plot import DraggablePlot
 import json
 
 BoneNode = dict
@@ -16,19 +14,41 @@ class JsonLiveLink(object):
         self.port = port
         self.addr = (ip, port)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.skeleton = {}
+        self.transforms = {}
     
     def __del__(self):
         self.socket.close()
     
-    def send(self, data: bytes) -> None:
-        self.socket.sendto(data, self.addr)
-
-    def set_bones(self, bone_tree: BoneNode):
-        self.bones, self.parents = self._flatten_bones(bone_tree)
-        assert(len(self.bones) == len(self.parents))
-        self.bones_transforms = {
-            self.bones[i]: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1] for i in range(len(self.bones))
+    def set_bones(self, subject_name: str, bone_tree: BoneNode):
+        bones, parents = self._flatten_bones(bone_tree)
+        self.skeleton[subject_name] = (bones, parents)
+        self.transforms[subject_name] = {
+            bones[i]: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1] for i in range(len(bones))
         }
+    
+    def update(self, *subjects_to_update: list[str]):
+        if not subjects_to_update:
+            subjects_to_update = list(self.skeleton.keys())
+        for subject in subjects_to_update:
+            bones, parents = self.skeleton[subject]
+            transforms = self.transforms[subject]
+            bones_data = []
+            for i in range(len(bones)):
+                transform = transforms[bones[i]]
+                bones_data.append({
+                    "Name": bones[i],
+                    "Parent": parents[i],
+                    "Location": transform[0:3],
+                    "Rotation": transform[3:7],
+                    "Scale": transform[7:10],
+                })
+
+            subject_data = {subject: bones_data}
+            self._send(json.dumps(subject_data).encode("utf-8"))
+
+    def _send(self, data: bytes) -> None:
+        self.socket.sendto(data, self.addr)
 
     @staticmethod
     def _flatten_bones(bone_tree: BoneNode):
@@ -45,6 +65,8 @@ class JsonLiveLink(object):
 
         def walk_bones(bone_tree: BoneNode, callback: callable = None, parent_bone: str = ''):
             # print('walk_bones: ', parent_bone_id, bone_tree)
+            if not bone_tree:
+                return
             for bone in bone_tree:
                 if callback:
                     callback(parent_bone, bone)
@@ -77,50 +99,3 @@ class JsonLiveLink(object):
 
         return bone_array, bone_parent_array
 
-
-# ======================  test ======================
-
-jll = JsonLiveLink("127.0.0.1", 54321)
-jll.set_bones({
-    "root": {
-        "base": {},
-        "stone_1": "stone_2",
-        "stupka": {}
-    }
-})
-
-# matplot callback
-def on_update_plot(points):
-    global jll
-    scale = 1.0
-    for name in points:
-        x,y = points[name]
-        transform = jll.bones_transforms[name]
-        transform[0] = x * scale
-        transform[1] = 0 * scale
-        transform[2] = y * scale
-    subject = {
-        "mortar": [    ##### EDIT SUBJECT NAME
-            {
-                "Name": jll.bones[i],
-                "Parent": jll.parents[i],
-                "Location": jll.bones_transforms[jll.bones[i]][0:3],
-                "Rotation": jll.bones_transforms[jll.bones[i]][3:7],
-                "Scale": jll.bones_transforms[jll.bones[i]][7:10],
-            } for i in range(len(jll.bones))
-        ]
-    }
-    jll.send(json.dumps(subject).encode("utf-8"))
-
-xlim = (-100, 100)
-ylim = xlim
-plot = DraggablePlot(xlim, ylim, on_update_plot)
-# add bones
-for bone in jll.bones:
-    rand_x = random.randint(*xlim)
-    rand_y = random.randint(*ylim)
-    plot.add_point(rand_x, rand_y, bone)
-# manual update to plot newly added bones
-plot.update_plot()
-
-plot.show()
