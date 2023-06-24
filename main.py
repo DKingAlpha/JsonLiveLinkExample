@@ -8,7 +8,7 @@ from draggable_plot import DraggablePlot
 import json
 
 BoneNode = dict
-BoneNode = dict[str, BoneNode | str]
+BoneNode = dict[str, BoneNode | str | list[str]]
 
 class JsonLiveLink(object):
     def __init__(self, ip, port):
@@ -23,7 +23,7 @@ class JsonLiveLink(object):
     def send(self, data: bytes) -> None:
         self.socket.sendto(data, self.addr)
 
-    def set_bones(self, bone_tree: dict[str, list[dict]]):
+    def set_bones(self, bone_tree: BoneNode):
         self.bones, self.parents = self._flatten_bones(bone_tree)
         assert(len(self.bones) == len(self.parents))
         self.bones_transforms = {

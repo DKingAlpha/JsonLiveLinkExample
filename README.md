@@ -2,7 +2,7 @@
 
 This is an example of using JsonLiveLink plugin to stream animation data from python to Unreal Engine.
 
-Animation data contains an subject name, and its bones definition and bone parents definition, as well as the bone transforms data.
+Animation data contain an subject name, and its bones definition and bone parents definition, as well as the bone transforms data.
 
 
 Json Data Format Sent to JsonLiveLink:
